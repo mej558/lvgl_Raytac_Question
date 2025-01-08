@@ -17,6 +17,19 @@
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(app);
+/************************************** */
+/* 1000 msec = 1 sec */
+#define SLEEP_TIME_MS   1000
+
+/* The devicetree node identifier for the "led0" alias. */
+#define LED0_NODE DT_ALIAS(led0)
+
+/*
+ * A build error on this line means your board is unsupported.
+ * See the sample documentation for information on how to fix this.
+ */
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+
 
 static uint32_t count;
 
@@ -115,8 +128,9 @@ int main(void)
 		hello_world_label = lv_label_create(lv_scr_act());
 	}
 
-	lv_label_set_text(hello_world_label, "Hello world!");
+	lv_label_set_text(hello_world_label, "Hello World2!");
 	lv_obj_align(hello_world_label, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_style_text_font(hello_world_label, &lv_font_montserrat_28, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 	count_label = lv_label_create(lv_scr_act());
 	lv_obj_align(count_label, LV_ALIGN_BOTTOM_MID, 0, 0);
@@ -124,13 +138,34 @@ int main(void)
 	lv_task_handler();
 	display_blanking_off(display_dev);
 
+int ret;
+
+	if (!gpio_is_ready_dt(&led)) {
+		return 0;
+	}
+
+	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		return 0;
+	}
+
 	while (1) {
-		if ((count % 100) == 0U) {
-			sprintf(count_str, "%d", count/100U);
-			lv_label_set_text(count_label, count_str);
-		}
+		// if ((count % 100) == 0U) {
+		// 	sprintf(count_str, "%d", count/100U);
+		// 	lv_label_set_text(count_label, count_str);
+		// 	printk("led lvgl sample\n");
+
+		// 	ret = gpio_pin_toggle_dt(&led);
+		// 	if (ret < 0) {
+		// 		printk("falied led\n\n");
+		// 		return 0;
+		// 	}
+		// }
+
 		lv_task_handler();
 		++count;
 		k_sleep(K_MSEC(10));
 	}
+
+	return 0;
 }
